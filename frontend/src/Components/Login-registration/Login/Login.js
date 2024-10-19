@@ -4,39 +4,48 @@ import LoginHeader from '../../Headers/LoginHeader'
 import FooterOne from '../../Footers/FooterOne'
 import FooterTwo from '../../Footers/FooterTwo'
 import axios from "axios"
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 const Login = () => {
 
     const [inputValue, setInputValue] = useState("");
     const [password, setPassword] = useState("");
-    const [errorMessage, setErrorMessage] = useState("");
+    const [error, setError] = useState("");
 
+    const navigate = useNavigate()
 
-
-    // Regular expression for email validation
 
 
     const handleSubmit = async (e) => {
-        e.preventDefault()
-
+        e.preventDefault();
+    
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        // Check if it's a valid number or email
-        if (emailRegex.test(inputValue) || !isNaN(inputValue)) {
-            setErrorMessage("");
+    
+        const isEmail = emailRegex.test(inputValue);
+        const isPhone = !isNaN(inputValue) && inputValue.length === 10;
+    
+        if (isEmail || isPhone) {
+            setError(""); 
         } else {
-            setErrorMessage("Please enter a valid email or number");
-            return
+            setError("Please enter a valid email or phone number");
+            return;
         }
-
+    
         try {
-            const response = await axios.post()
+            const payload = isEmail ? { email: inputValue, password } : { phone: inputValue, password };
+            const response = await axios.post("http://localhost:8080/login", payload);
+            console.log(response.data);
+    
+            localStorage.setItem("token", response.data.token);
+    
+            navigate("/home");
+    
         } catch (error) {
-
+            console.log(error);
+            setError("Invalid login credentials"); 
         }
-
     };
+    
 
 
     return (
@@ -52,13 +61,14 @@ const Login = () => {
                 <div className='right'>
                     <p className='sign_in_title'>SIGN IN</p>
                     <form onSubmit={handleSubmit}>
-                        <input className='login_input' type='text' value={inputValue} placeholder='Mobile / Email' onChange={(e) => setInputValue(e.target.value)} /> <br />
-                        <input className='login_input' type='password' placeholder='Password' value={password} onChange={(e) => setPassword(e.target.value)} />
+                        <input className='login_input' type='text' value={inputValue} placeholder='Mobile / Email' onChange={(e) => setInputValue(e.target.value)} required /> <br />
+                        <input className='login_input' type='password' placeholder='Password' value={password} onChange={(e) => setPassword(e.target.value)} required />
+                        <div>
+                            {error}
+                        </div>
                         <p className='fp'>Forget password?</p>
                         <button className='btn-signIn' type='submit'>Sign In</button>
-                        <div>
-                            {errorMessage}
-                        </div>
+
                     </form>
                 </div>
 
